@@ -1,0 +1,82 @@
+name: Persistent Ubuntu VPS (SSHX + 1s Autosave + Heartbeat)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # Max ~6 hours
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Prepare vm_data folder inside repo
+        run: |
+          echo "📁 Preparing vm_data folder inside repo..."
+          mkdir -p $GITHUB_WORKSPACE/vm_data
+          cd $GITHUB_WORKSPACE/vm_data
+          echo "✅ vm_data folder ready at $GITHUB_WORKSPACE/vm_data"
+
+      - name: Restore previous VM data
+        run: |
+          echo "🔁 Restoring VM data from vm-data branch..."
+          cd $GITHUB_WORKSPACE/vm_data
+          git fetch origin vm-data || echo "⚠️ No vm-data branch found, starting fresh."
+          git checkout origin/vm-data -- . 2>/dev/null || true
+          echo "✅ Data restored."
+
+      - name: Install and Start SSHX in Background
+        run: |
+          echo "⚙️ Installing and starting SSHX..."
+          cd $GITHUB_WORKSPACE/vm_data
+          nohup bash -c "curl -sSf https://sshx.io/get | sh -s run > $GITHUB_WORKSPACE/vm_data/sshx_link.txt 2>&1" &
+          sleep 10
+
+          echo "🌐 SSHX Link (open in browser):"
+          grep -Eo 'https://sshx.io/[^ ]+' $GITHUB_WORKSPACE/vm_data/sshx_link.txt || echo "❌ SSHX link not found"
+          echo "✅ SSHX is running in the background!"
+
+      - name: Start Heartbeat & 1-second Autosave
+        run: |
+          echo "💾 Starting heartbeat and autosave..."
+          cd $GITHUB_WORKSPACE/vm_data
+          nohup bash -c "while true; do
+            # Heartbeat log
+            echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] ✅ VPS alive (autosave running)\" >> status.log
+
+            # Git autosave
+            git init -q
+            git config user.email 'actions@github.com'
+            git config user.name 'github-actions'
+            git add .
+            git commit -m \"🕐 Autosave at \$(date)\" -q || true
+            git branch -M vm-data
+            git push -f https://github.com/${{ github.repository }} vm-data >/dev/null 2>&1 || true
+
+            sleep 1
+          done" &
+          echo "✅ Heartbeat & autosave running in background."
+
+      - name: Keep VPS alive
+        run: |
+          echo "🌀 VPS is running. Waiting for runner shutdown (max 6 hours)..."
+          while true; do sleep 60; done
+
+      - name: Final Save Before Runner Shutdown
+        if: always()
+        run: |
+          echo "📦 Runner shutting down — saving final VM data..."
+          cd $GITHUB_WORKSPACE/vm_data
+          git init -q
+          git config user.email 'actions@github.com'
+          git config user.name 'github-actions'
+          git add .
+          git commit -m "💾 Final autosave before shutdown $(date)" -q || true
+          git branch -M vm-data
+          git push -f https://github.com/${{ github.repository }} vm-data || true
+          echo "✅ Final data saved."
