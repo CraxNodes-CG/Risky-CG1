@@ -1,14 +1,14 @@
 [0m[35;1m↯ Downloading sshx from [4mhttps://s3.amazonaws.com/sshx/sshx-x86_64-unknown-linux-musl.tar.gz[0m
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 2869k  100 2869k    0     0  24.8M      0 --:--:-- --:--:-- --:--:-- 25.0M
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 2869k  100 2869k    0     0  4129k      0 --:--:-- --:--:-- --:--:-- 4135k
 
-[0m[35;1m↯ Adding sshx binary to [4m/tmp/tmp.l779S1ZzSP[0m
+[0m[35;1m↯ Adding sshx binary to [4m/tmp/tmp.ktAjRwZW59[0m
 
 [0m[35;1m↯ Done! You can now run sshx.[0m
 
   [1;32msshx[0m [32mv0.4.1[0m
 
-  [32m➜[0m  Link:  [4;36mhttps://sshx.io/s/XkUvjFMYA9#CY4VW6XMwVmKoJ[0m
+  [32m➜[0m  Link:  [4;36mhttps://sshx.io/s/dujmjTpqM2#39RArLudsy6yWi[0m
   [32m➜[0m  Shell: [38;5;8m/bin/bash[0m
 
