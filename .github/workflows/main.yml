@@ -18,7 +18,7 @@ jobs:
       - name: Prepare vm_data folder
         run: |
           echo "📁 Preparing vm_data folder..."
-          mkdir -p "$GITHUB_WORKSPACE/vm_data"
+          mkdir -p "$GITHUB_WORKSPACE/vm_data/pufferpanel"
           cd "$GITHUB_WORKSPACE/vm_data"
           echo "✅ vm_data folder ready."
 
@@ -47,19 +47,28 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          echo "💾 Starting 1-sec autosave..."
+          echo "💾 Starting 10-sec autosave..."
           cd "$GITHUB_WORKSPACE/vm_data"
           nohup bash -c "while true; do
+            # Copy all internal files (like PufferPanel data) to vm_data
+            rsync -a pufferpanel/ ./pufferpanel/
+
+            # Log heartbeat
             echo \"[\$(date '+%H:%M:%S')] ✅ Alive (autosave running)\" >> status.log
+
+            # Ensure empty directories exist
             find . -type d -empty -exec touch {}/.gitkeep \;
+
+            # Git commit + push
             git init -q
             git config user.email 'actions@github.com'
             git config user.name 'github-actions'
-            git add .
+            git add -A
             git commit -m \"🕐 Autosave at \$(date '+%H:%M:%S')\" -q || true
             git branch -M vm-data
             git push -f https://$PAT_TOKEN@github.com/${{ github.repository }} vm-data >/dev/null 2>&1 || true
-            sleep 1
+
+            sleep 10
           done" &
           echo "✅ Autosave running in background."
 
@@ -78,14 +87,17 @@ jobs:
           echo "📦 Runner shutting down — saving final data..."
           cd "$GITHUB_WORKSPACE/vm_data"
 
-          # Ensure empty directories are tracked
+          # Copy all internal files one last time
+          rsync -a pufferpanel/ ./pufferpanel/
+
+          # Ensure empty directories exist
           find . -type d -empty -exec touch {}/.gitkeep \;
 
           # Commit and push final changes
           git init -q
           git config user.email 'actions@github.com'
           git config user.name 'github-actions'
-          git add .
+          git add -A
           git commit -m "💾 Final autosave before restart $(date '+%H:%M:%S')" -q || true
           git branch -M vm-data
           git push -f https://$PAT_TOKEN@github.com/${{ github.repository }} vm-data || true
