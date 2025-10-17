@@ -6,7 +6,7 @@ on:
 jobs:
   vps:
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # keep short for test
+    timeout-minutes: 5  # short run for test
 
     steps:
       - name: Checkout repository
@@ -41,6 +41,7 @@ jobs:
           sleep 8
           echo "🌐 SSHX Link:"
           grep -Eo 'https://sshx.io/[^ ]+' sshx_link.txt || echo "❌ SSHX link not found"
+          echo "✅ SSHX running."
 
       - name: Start Heartbeat & Autosave
         env:
@@ -76,7 +77,11 @@ jobs:
         run: |
           echo "📦 Runner shutting down — saving final data..."
           cd "$GITHUB_WORKSPACE/vm_data"
+
+          # Ensure empty directories are tracked
           find . -type d -empty -exec touch {}/.gitkeep \;
+
+          # Commit and push final changes
           git init -q
           git config user.email 'actions@github.com'
           git config user.name 'github-actions'
@@ -86,8 +91,8 @@ jobs:
           git push -f https://$PAT_TOKEN@github.com/${{ github.repository }} vm-data || true
           echo "✅ Final data saved."
 
-          echo "♻️ Logging restart..."
-          echo \"[\$(date '+%H:%M:%S')] 🔁 Restart triggered\" >> status.log
+          # Log restart timestamp safely
+          echo "[$(date '+%H:%M:%S')] 🔁 Restart triggered" >> status.log
 
           echo "♻️ Triggering automatic restart..."
           curl -X POST \
