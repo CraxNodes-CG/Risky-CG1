@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  pufferpanel:
+    image: pufferpanel/pufferpanel:latest
+    container_name: pufferpanel
+    restart: always
+    ports:
+      - "8080:8080"   # Web panel port
+      - "2022:2022"   # SSH daemon port for servers
+    volumes:
+      - ./data:/data
